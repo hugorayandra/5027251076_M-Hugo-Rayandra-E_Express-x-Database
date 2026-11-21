@@ -5,8 +5,11 @@ async function main() {
   await prisma.$executeRawUnsafe(`DELETE FROM sqlite_sequence WHERE name = 'Product';`);
 
   const initialProducts = [
-    { name: 'Buku Tulis Campus', price: 15000, stock: 40 },
-    { name: 'Pulpen Pilot Hitam', price: 5000, stock: 100 },
+    { name: 'Pulpen', price: 5000, stock: 100 },
+    { name: 'Buku Tulis', price: 12000, stock: 45 },
+    { name: 'Spidol', price: 8000, stock: 60 },
+    { name: 'Penggaris', price: 6000, stock: 50 },
+    { name: 'Penghapus', price: 3000, stock: 80 },
   ];
 
   for (const item of initialProducts) {
