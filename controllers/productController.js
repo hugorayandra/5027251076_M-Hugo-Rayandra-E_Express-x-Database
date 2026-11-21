@@ -1,28 +1,30 @@
 const prisma = require('../lib/prisma');
 
-// Helper validasi field produk (name, price, stock)
-const validateProductPayload = ({ name, price, stock }) => {
-  if (name === undefined || name === null || price === undefined || price === null || stock === undefined || stock === null) {
-    return 'Validasi gagal: field name, price, dan stock wajib diisi';
+// Helper validasi field produk (name, price, stock opsional dengan default 0)
+const validateProductPayload = ({ name, price, stock = 0 }) => {
+  if (name === undefined || name === null || price === undefined || price === null) {
+    return 'Validasi gagal: field name dan price wajib diisi';
   }
 
   if (typeof name !== 'string' || name.trim() === '') {
     return 'Validasi gagal: name harus berupa teks (string) dan tidak boleh kosong';
   }
 
-  if (typeof price !== 'number' || !Number.isFinite(price)) {
+  const numericPrice = typeof price === 'string' && price.trim() !== '' ? Number(price) : price;
+  if (typeof numericPrice !== 'number' || !Number.isFinite(numericPrice)) {
     return 'Validasi gagal: price harus berupa angka';
   }
 
-  if (price < 0) {
-    return 'Validasi gagal: price tidak boleh bernilai negatif';
+  if (numericPrice <= 0) {
+    return 'Validasi gagal: price harus lebih dari 0';
   }
 
-  if (typeof stock !== 'number' || !Number.isInteger(stock)) {
+  const numericStock = stock === undefined || stock === null || stock === '' ? 0 : (typeof stock === 'string' ? Number(stock) : stock);
+  if (typeof numericStock !== 'number' || !Number.isInteger(numericStock)) {
     return 'Validasi gagal: stock harus berupa bilangan bulat (integer)';
   }
 
-  if (stock < 0) {
+  if (numericStock < 0) {
     return 'Validasi gagal: stock tidak boleh bernilai negatif';
   }
 
@@ -112,12 +114,15 @@ const createProduct = async (req, res) => {
     });
   }
 
+  const normalizedPrice = Number(price);
+  const normalizedStock = stock === undefined || stock === null || stock === '' ? 0 : Number(stock);
+
   try {
     const product = await prisma.product.create({
       data: {
         name: name.trim(),
-        price,
-        stock,
+        price: normalizedPrice,
+        stock: normalizedStock,
       },
     });
 
@@ -135,7 +140,7 @@ const createProduct = async (req, res) => {
   }
 };
 
-// 3. PUT: Mengupdate data yang sudah ada (body sama dengan POST namun ada tambahan id)
+// 3. PUT: Mengupdate data yang sudah ada (id dapat dikirim melalui URL parameter :id atau body)
 const updateProduct = async (req, res) => {
   const body = req.body || {};
   const rawId = body.id !== undefined ? body.id : req.params.id;
@@ -145,7 +150,7 @@ const updateProduct = async (req, res) => {
   if (parsedId === null) {
     return res.status(400).json({
       success: false,
-      message: 'Validasi gagal: id wajib disertakan pada body',
+      message: 'Validasi gagal: id wajib disertakan pada parameter URL atau body',
     });
   }
 
@@ -164,6 +169,8 @@ const updateProduct = async (req, res) => {
     });
   }
 
+  const normalizedPrice = Number(price);
+
   try {
     const existing = await prisma.product.findUnique({
       where: { id: parsedId },
@@ -176,12 +183,17 @@ const updateProduct = async (req, res) => {
       });
     }
 
+    const normalizedStock =
+      stock === undefined || stock === null || stock === ''
+        ? existing.stock
+        : Number(stock);
+
     const updated = await prisma.product.update({
       where: { id: parsedId },
       data: {
         name: name.trim(),
-        price,
-        stock,
+        price: normalizedPrice,
+        stock: normalizedStock,
       },
     });
 

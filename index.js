@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
       getAll: 'GET /products',
       getById: 'GET /products/:id',
       create: 'POST /products',
-      update: 'PUT /products',
+      update: 'PUT /products/:id (atau PUT /products dengan id di body)',
       delete: 'DELETE /products/:id',
     },
   });
